@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master-Kompass & Impuls-Stopp</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #131b2e;
+            --accent-gold: #f59e0b;
+            --accent-blue: #3b82f6;
+            --accent-red: #ef4444;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: #1f2937;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 16px;
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-top: 12px;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            color: var(--accent-gold);
+            margin-bottom: 4px;
+        }
+
+        header p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            background-color: #0b0f19;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        button {
+            width: 100%;
+            background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:active {
+            opacity: 0.8;
+        }
+
+        .energy-slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .energy-display {
+            font-weight: bold;
+            color: var(--accent-gold);
+            text-align: center;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+
+        input[type="range"] {
+            accent-color: var(--accent-gold);
+            cursor: pointer;
+        }
+
+        .idea-item {
+            background-color: rgba(255, 255, 255, 0.03);
+            border-left: 4px solid var(--accent-gold);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .idea-item small {
+            color: var(--text-muted);
+            display: block;
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+
+        .status-locked { background-color: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .status-ready { background-color: rgba(16, 185, 129, 0.2); color: #34d399; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🧭 Master-Kompass</h1>
+        <p>Dein persönlicher Anker & Impuls-Stopp</p>
+    </header>
+
+    <!-- 1. Energie-Checker -->
+    <div class="card">
+        <h2>⚡ Aktueller Energie-Level</h2>
+        <div class="energy-slider-container">
+            <div id="energyText" class="energy-display">50% - Ausgeglichen</div>
+            <input type="range" id="energyRange" min="10" max="100" value="50" oninput="updateEnergy(this.value)">
+        </div>
+    </div>
+
+    <!-- 2. Impuls-Stopp & Ideen-Speicher -->
+    <div class="card">
+        <h2>🛑 Der 24h-Impuls-Stopp</h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Speichere neue Ideen hier ab. Der Countdown zwingt deinen Autopiloten zur Pause.</p>
+        <input type="text" id="ideaTitle" placeholder="Titel der Idee / des Impulses...">
+        <textarea id="ideaNotes" rows="2" placeholder="Kurze Notiz: Warum will ich das sofort machen?"></textarea>
+        <button onclick="saveIdea()">Idee in Sicherheit bringen 🔒</button>
+    </div>
+
+    <!-- 3. Stresstest / Kritiker-Funktion -->
+    <div class="card">
+        <h2>⚖️ Der Mini-Stresstest</h2>
+        <select id="stressTestQ">
+            <option value="">-- Wähle die Kernfrage für deine Idee --</option>
+            <option value="langfristig">Bringt mir das langfristig echten Wert oder nur ein kurzes Strohfeuer?</option>
+            <option value="preis">Welchen Preis an Energie & Zeit zahle ich JETZT dafür?</option>
+            <option value="worstcase">Was passiert im Worst-Case, wenn ich es einfach JETZT LASSE?</option>
+        </select>
+        <textarea id="stressAnswer" rows="2" placeholder="Deine ehrliche Antwort..."></textarea>
+    </div>
+
+    <!-- 4. Gespeicherte Ideen (Archiv) -->
+    <div class="card">
+        <h2>📂 Dein Fundament-Archiv</h2>
+        <div id="ideasContainer">
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Noch keine Ideen gesperrt. Dein Kopf ist frei!</p>
+        </div>
+    </div>
+
+    <script>
+        function updateEnergy(val) {
+            const display = document.getElementById('energyText');
+            if (val < 30) {
+                display.innerText = val + "% - 🔴 Roter Bereich! Heute wird nur entspannt.";
+                display.style.color = "var(--accent-red)";
+            } else if (val < 70) {
+                display.innerText = val + "% - 🟡 Stabiler Modus. Schritt für Schritt.";
+                display.style.color = "var(--accent-gold)";
+            } else {
+                display.innerText = val + "% - 🟢 Volle Batterie! Voller Fokus.";
+                display.style.color = "#34d399";
+            }
+            localStorage.setItem('master_energy', val);
+        }
+
+        // Load saved energy
+        window.onload = function() {
+            const savedEnergy = localStorage.getItem('master_energy');
+            if (savedEnergy) {
+                document.getElementById('energyRange').value = savedEnergy;
+                updateEnergy(savedEnergy);
+            }
+            loadIdeas();
+        }
+
+        function saveIdea() {
+            const title = document.getElementById('ideaTitle').value;
+            const notes = document.getElementById('ideaNotes').value;
+            if(!title) {
+                alert('Bitte gib deiner Idee einen Titel!');
+                return;
+            }
+
+            const ideas = JSON.parse(localStorage.getItem('master_ideas') || '[]');
+            const newIdea = {
+                title: title,
+                notes: notes,
+                date: new Date().toLocaleString(),
+                unlockTime: new Date().getTime() + (24 * 60 * 60 * 1000) // 24 hours later
+            };
+
+            ideas.unshift(newIdea);
+            localStorage.setItem('master_ideas', JSON.stringify(ideas));
+
+            document.getElementById('ideaTitle').value = '';
+            document.getElementById('ideaNotes').value = '';
+            loadIdeas();
+        }
+
+        function loadIdeas() {
+            const container = document.getElementById('ideasContainer');
+            const ideas = JSON.parse(localStorage.getItem('master_ideas') || '[]');
+            
+            if(ideas.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Noch keine Ideen gesperrt. Dein Kopf ist frei!</p>';
+                return;
+            }
+
+            let html = '';
+            const now = new Date().getTime();
+
+            ideas.forEach((item, index) => {
+                const isUnlocked = now >= item.unlockTime;
+                html += `
+                    <div class="idea-item">
+                        <strong>${item.title}</strong>
+                        <small>${item.notes}</small>
+                        <small>Gespeichert am: ${item.date}</small>
+                        <span class="status-badge ${isUnlocked ? 'status-ready' : 'status-locked'}">
+                            ${isUnlocked ? '✅ Bedenkzeit abgelaufen (Bereit)' : '🔒 24h Bedenkzeit aktiv'}
+                        </span>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
